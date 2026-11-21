@@ -1,0 +1,18 @@
+name: venv
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - numpy
+  - scikit-image
+  - matplotlib
+  - pandas
+  - tk
+  - openpyxl
+  - pip
+  - pip:
+      - cellpose>=4.1.0
+      - tifffile
+      - opencv-python-headless
+      - czifile
+      - nd2
