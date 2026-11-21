@@ -1,18 +1,15 @@
-name: venv
+name: p4-venv
 channels:
   - conda-forge
 dependencies:
-  - python=3.13
+  - python=3.11
+  - pandas
+  - openpyxl
+  - cellpose>=4.1.0
+  - tifffile
   - numpy
   - scikit-image
   - matplotlib
-  - pandas
-  - tk
-  - openpyxl
-  - pip
-  - pip:
-      - cellpose>=4.1.0
-      - tifffile
-      - opencv-python-headless
-      - czifile
-      - nd2
+  - opencv-python-headless
+  - czifile
+  - nd2
