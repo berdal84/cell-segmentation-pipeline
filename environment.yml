@@ -10,6 +10,6 @@ dependencies:
   - numpy
   - scikit-image
   - matplotlib
-  - opencv-python-headless
+  - py-opencv
   - czifile
   - nd2
