@@ -14,6 +14,14 @@ Requires an excel file listing the samples with the following columns: `path`, `
 - `path`: should contain the path to the image (relative to `image_dir`)
 - `C1`, `C2`, `C3`, `C4`: should contain the name of the marker (ex: `DAPI`) for that channel, or nothing.
 
+Example:
+
+|path|C1|C2|C3|C4|
+| :--- | :--- | :--- | :--- | :--- 
+|folder1/imageB.czi|CRX|KI67|DAPI|
+|folder2/imageA.czi|KI67|DAPI|
+
+Note: it's fine if cells are empty, default name will be the column (C1, C2, etc.)
 ## Run
 
 
