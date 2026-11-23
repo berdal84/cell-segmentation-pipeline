@@ -1,6 +1,6 @@
 nextflow.enable.types = true
 
-process XLSX_to_CSV {
+process XLSX_TO_CSV {
     publishDir 'results', mode: 'copy'
 
     input:
@@ -12,11 +12,11 @@ process XLSX_to_CSV {
 
     script:
     """
-    XLSX-to-CSV.py "${input_file.name}" "${input_file.baseName}.csv" ${header}
+    XLSX_TO_CSV.py "${input_file.name}" "${input_file.baseName}.csv" ${header}
     """
 }
 
-process CZI_to_TIF {
+process CZI_TO_TIF {
     publishDir 'results/images', mode: 'copy'
 
     input:
@@ -27,11 +27,11 @@ process CZI_to_TIF {
 
     script:
     """
-    CZI-to-TIF.py "${czi_path.name}" "${czi_path.baseName}" ${channel_names.join(" ")}
+    CZI_TO_TIF.py "${czi_path.name}" "${czi_path.baseName}" ${channel_names.join(" ")}
     """
 }
 
-process run_segmentation {
+process SEGMENTATION {
     publishDir 'results/images', mode: 'copy'
     maxForks 1 // cellpose is GPU intensive
     
@@ -68,7 +68,7 @@ workflow {
     ch_samples_xslx = channel.of(params.sample_file)
     // ch_samples_xslx.view()
 
-    ch_samples_csv = XLSX_to_CSV(ch_samples_xslx, params.sample_file_header_row)
+    ch_samples_csv = XLSX_TO_CSV(ch_samples_xslx, params.sample_file_header_row)
     // ch_samples_csv.view()
 
     // prepare inputs for CZI_to_TIF
@@ -87,12 +87,12 @@ workflow {
             )
         }
 
-    ch_tifs = CZI_to_TIF(ch_samples)
+    ch_tifs = CZI_TO_TIF(ch_samples)
     
     ch_dapi_tifs = ch_tifs.flatMap { paths ->
         paths.findAll { path -> path.name.contains(params.marker_to_segmentize) }
     }
     // ch_dapi_tifs.view()
 
-    run_segmentation(ch_dapi_tifs)
+    SEGMENTATION(ch_dapi_tifs)
 }
