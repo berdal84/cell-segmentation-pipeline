@@ -92,9 +92,9 @@ for index, sample in enumerate(samples.itertuples(), start=1):
             normalized_image_path = output / f"{image_path.stem}_normalized.tif"
             normalized_image_path.parent.mkdir(parents=True, exist_ok=True)
             print(f"Writing {normalized_image_path} ...")
-            cv2.imwrite(normalized_image_path, image)
+            cv2.imwrite(normalized_image_path, image, [cv2.IMWRITE_TIFF_COMPRESSION, cv2.IMWRITE_TIFF_COMPRESSION_LZMA])
 
-    print("Running cellpose ...")
+    print("Running cellpose ...")   
     mask, flows, styles = cp_model.eval(
         image,
         diameter=args.diameter,  # None = auto-estimate
@@ -103,7 +103,7 @@ for index, sample in enumerate(samples.itertuples(), start=1):
         normalize=False, # We do normalize if --normalize is set outside cellpose
     )
     cell_count = int(mask.max())
-    results[index].cell_count = cell_count
+    results.loc[index, 'cell_count'] = cell_count
     print(f"Cellpose found {cell_count} cell(s).")
 
     def random_label_cmap_image(mask, seed=None):
@@ -114,10 +114,10 @@ for index, sample in enumerate(samples.itertuples(), start=1):
     
     mask_colorized  = random_label_cmap_image(mask)
     cp_masks_suffix = "_cp_masks"
-    mask_colorized_path = output / f"{image_path.stem}{cp_masks_suffix}_colorized.png"
+    mask_colorized_path = output / f"{image_path.stem}{cp_masks_suffix}_colorized.tif"
     mask_colorized_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"Writing {mask_colorized_path} ...")
-    cv2.imwrite(mask_colorized_path, mask_colorized)
+    cv2.imwrite(mask_colorized_path, mask_colorized, [cv2.IMWRITE_TIFF_COMPRESSION, cv2.IMWRITE_TIFF_COMPRESSION_LZMA])
 
     # Save masks (using cellpose method)
     # - precise method, it uses 16 or 32bits when needed, cellpose code switches from PNG to TGA when necessary.
