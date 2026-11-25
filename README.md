@@ -27,7 +27,7 @@ Note: it's fine if cells are empty, default name will be the column (C1, C2, etc
 
 ```
 nextflow run berdal84/cell-segmentation-pipeline [-r <tag/branch>] \
-    --sample_file="path/to/your/samples.xslx" \
+    --sample_file="path/to/your/samples.(xslx|csv)" \
     --image_dir="path/to/your/images" \
     --marker="DAPI"
 ```
@@ -47,3 +47,4 @@ Things I plan to do:
 - [x] Handle *.csv directly (would skip XLSX_to_CSV step)
 - [x] Handle *.tif directly (would skip CZI_to_TIF step)
 - [x] Generate a *.csv file to summarize the results.
+- [ ] SPLIT_CHANNELS should process N images, it is quite fast, so I should give a file list (ex: split-channels.csv).
