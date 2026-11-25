@@ -72,6 +72,9 @@ for index, sample in enumerate(samples.itertuples(), start=1):
     image_path = Path(sample.path)
     image = cv2.imread(image_path )
 
+    if image is None:
+        raise RuntimeError(f"Unable to load {image_path}!")
+
     # convert to float32
     if image.dtype == np.uint8:
         print("Image type is uint8, converting to float32 ...")

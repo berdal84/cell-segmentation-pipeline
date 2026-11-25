@@ -1,2 +1,3 @@
-path
-test/sample-DAPI.tif
+path,C1,C2
+test-sample-1.tif,DAPI,KI67
+test-sample-2.tif,DAPI,KI67

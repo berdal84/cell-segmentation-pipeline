@@ -1,7 +1,7 @@
 nextflow.enable.types = true
 
 process XLSX_TO_CSV {
-    publishDir 'results', mode: 'copy'
+    publishDir 'results/tmp', mode: 'copy'
 
     input:
     input_file: Path
@@ -16,8 +16,8 @@ process XLSX_TO_CSV {
     """
 }
 
-process CZI_TO_TIF {
-    publishDir 'results/images', mode: 'copy'
+process SPLIT_CHANNELS {
+    publishDir 'results/tmp/splitted-channels', mode: 'copy'
 
     input:
     tuple (czi_path: Path, channel_names: Iterable<String>)
@@ -27,37 +27,47 @@ process CZI_TO_TIF {
 
     script:
     """
-    CZI_TO_TIF.py "${czi_path.name}" "${czi_path.baseName}" ${channel_names.join(" ")}
+    SPLIT_CHANNELS.py "${czi_path.name}" "${czi_path.baseName}" ${channel_names.join(" ")}
     """
 }
 
 process SEGMENTATION {
-    publishDir 'results/images', mode: 'copy'
+    publishDir 'results/segmentation', mode: 'copy'
     maxForks 1 // cellpose is GPU intensive
     
     input:
-    tif_path: Path
+    tuple (csv: Path, images: Bag<Path> )
 
     output:
-    cellpose_files: Set<Path> = files("${tif_path.baseName}_cp*")
+    result = record(
+        cp_masks: files("*_cp_masks"),
+        cp_masks_colorized: files("*_cp_masks_colorized"),
+        normalized: files("*_normalized"),
+        results:  file("results.csv")
+    )
 
     script:
     """
-    # documentation: https://cellpose.readthedocs.io/en/latest/cli.html
-    python -m cellpose \
-        --image_path "${tif_path.name}" \
-        --output_name="${tif_path.name}_cp" \
-        --diameter ${50*10} \
-        --save_tif \
-        --verbose \
-        --use_gpu
+    SEGMENTATION.py \
+        --samples "${csv}" \
+        --output './' \
+        --normalize \
+        --percentile_min 0 --percentile_max 100
     """
 }
 
 params {
+    
+    // XLSX or CSV file, requires columns: path, C1, C2, C3, C4
     sample_file: Path
-    sample_file_header_row: Integer
+
+    // Optionnal, just in case your CSV file header is not at index 0
+    sample_file_header_row: Integer = 0
+
+    // The folder where you put your images in (their path in the spreadsheet must be relative to it)
     image_dir: Path
+
+    // The marker to segmentize, must be a value present in C1, C2, C3 or C4 (ex: DAPI)
     marker_to_segmentize: String
 }
 
@@ -65,14 +75,18 @@ workflow {
     log.info "params.sample_file = ${params.sample_file}"
     log.info "params.image_dir   = ${params.image_dir}"
 
-    ch_samples_xslx = channel.of(params.sample_file)
+    ch_sample_file = channel.of(params.sample_file)
     // ch_samples_xslx.view()
 
-    ch_samples_csv = XLSX_TO_CSV(ch_samples_xslx, params.sample_file_header_row)
+    if( params.sample_file.extension == "xlsx")
+    {
+        ch_sample_file = XLSX_TO_CSV(ch_sample_file, params.sample_file_header_row)
+    }
+    
     // ch_samples_csv.view()
 
-    // prepare inputs for CZI_to_TIF
-    ch_samples = ch_samples_csv
+    // prepare inputs for SPLIT_CHANNELS
+    ch_samples = ch_sample_file
         .flatMap { csv -> csv.splitCsv(header: true, strip: true, sep: ',') }
         .filter{ row -> !row.skip }
         .map { row ->
@@ -87,12 +101,23 @@ workflow {
             )
         }
 
-    ch_tifs = CZI_TO_TIF(ch_samples)
+    ch_tifs = SPLIT_CHANNELS(ch_samples)
     
     ch_dapi_tifs = ch_tifs.flatMap { paths ->
         paths.findAll { path -> path.name.contains(params.marker_to_segmentize) }
     }
-    // ch_dapi_tifs.view()
 
-    SEGMENTATION(ch_dapi_tifs)
+    ch_segmentation_input_csv = ch_dapi_tifs
+        .map { path -> "${path.name}" }
+        .collectFile(
+            name: 'segmentation-input.csv',
+            storeDir: './results/tmp',
+            seed: 'path',
+            newLine: true
+        )
+
+    ch_segmentation_inputs = ch_segmentation_input_csv.combine(
+        ch_dapi_tifs.collect()
+    )
+    SEGMENTATION(ch_segmentation_inputs)
 }
