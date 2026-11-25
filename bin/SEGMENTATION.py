@@ -97,14 +97,18 @@ for index, sample in enumerate(samples.itertuples(), start=1):
             print(f"Writing {normalized_image_path} ...")
             cv2.imwrite(normalized_image_path, image, [cv2.IMWRITE_TIFF_COMPRESSION, cv2.IMWRITE_TIFF_COMPRESSION_LZMA])
 
-    print("Running cellpose ...")   
-    mask, flows, styles = cp_model.eval(
-        image,
-        diameter=args.diameter,  # None = auto-estimate
-        flow_threshold=args.flow_threshold,
-        cellprob_threshold=args.cellprob_threshold,
-        normalize=False, # We do normalize if --normalize is set outside cellpose
-    )
+    print("Running cellpose ...")
+    try:
+        mask, flows, styles = cp_model.eval(
+            image,
+            diameter=args.diameter,  # None = auto-estimate
+            flow_threshold=args.flow_threshold,
+            cellprob_threshold=args.cellprob_threshold,
+            normalize=False, # We do normalize if --normalize is set outside cellpose
+        )
+    except Exception as e:
+        print(f"An error occurred during cp_model.eval(): {e}")
+    
     cell_count = int(mask.max())
     results.loc[index, 'cell_count'] = cell_count
     print(f"Cellpose found {cell_count} cell(s).")

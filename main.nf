@@ -52,7 +52,8 @@ process SEGMENTATION {
         --samples "${csv}" \
         --output './' \
         --normalize \
-        --percentile_min 0 --percentile_max 100
+        --percentile_min ${params.percentile_min} \
+        --percentile_max ${params.percentile_max}
     """
 }
 
@@ -67,8 +68,20 @@ params {
     // The folder where you put your images in (their path in the spreadsheet must be relative to it)
     image_dir: Path
 
-    // The marker to segmentize, must be a value present in C1, C2, C3 or C4 (ex: DAPI)
-    marker_to_segmentize: String
+    // The marker to use for segmentation, must be a value present in C1, C2, C3 or C4 (ex: DAPI)
+    marker: String
+
+    percentile_min: float       = 1
+    percentile_max: float       = 100
+
+    // https://cellpose.readthedocs.io/en/latest/settings.html#diameter
+    diameter:       float       = 30
+
+    // https://cellpose.readthedocs.io/en/latest/settings.html#flow-threshold
+    flow_threshold: float       = 0
+
+    // https://cellpose.readthedocs.io/en/latest/settings.html#cellprob-threshold
+    cellprob_threshold: float   = 0
 }
 
 workflow {
@@ -104,7 +117,7 @@ workflow {
     ch_tifs = SPLIT_CHANNELS(ch_samples)
     
     ch_dapi_tifs = ch_tifs.flatMap { paths ->
-        paths.findAll { path -> path.name.contains(params.marker_to_segmentize) }
+        paths.findAll { path -> path.name.contains(params.marker) }
     }
 
     ch_segmentation_input_csv = ch_dapi_tifs

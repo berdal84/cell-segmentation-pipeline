@@ -1,6 +1,6 @@
 # Cell Segmentation Pipeline
 
-This is a Nextflow pipeline for segmentation of cell microscopy images (*.czi only) using Cellpose v4.
+This is a Nextflow pipeline for segmentation of cell microscopy images (*.czi or *.tif only) using Cellpose v4.
 
 # Usage
 
@@ -29,7 +29,7 @@ Note: it's fine if cells are empty, default name will be the column (C1, C2, etc
 nextflow run berdal84/cell-segmentation-pipeline [-r <tag/branch>] \
     --sample_file="path/to/your/samples.xslx" \
     --image_dir="path/to/your/images" \
-    --marker_to_segmentize="DAPI"
+    --marker="DAPI"
 ```
 
 Note: in case your samples header is not in the first row, you can specify it using `--sample_file_header_row=<header-row>`.
@@ -44,6 +44,6 @@ I do not plan to accept any contribution.
 
 Things I plan to do:
 
-- [ ] Handle *.csv directly (would skip XLSX_to_CSV step)
-- [ ] Handle *.tif directly (would skip CZI_to_TIF step)
-- [ ] Generate a *.csv file to summarize the results.
+- [x] Handle *.csv directly (would skip XLSX_to_CSV step)
+- [x] Handle *.tif directly (would skip CZI_to_TIF step)
+- [x] Generate a *.csv file to summarize the results.
