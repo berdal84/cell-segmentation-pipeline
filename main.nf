@@ -71,17 +71,17 @@ params {
     // The marker to use for segmentation, must be a value present in C1, C2, C3 or C4 (ex: DAPI)
     marker: String
 
-    percentile_min: float       = 1.0
-    percentile_max: float       = 100.0
+    percentile_min: float
+    percentile_max: float
 
     // https://cellpose.readthedocs.io/en/latest/settings.html#diameter
-    diameter:       float       = 30.0
+    diameter:       float
 
     // https://cellpose.readthedocs.io/en/latest/settings.html#flow-threshold
-    flow_threshold: float       = 0.0
+    flow_threshold: float
 
     // https://cellpose.readthedocs.io/en/latest/settings.html#cellprob-threshold
-    cellprob_threshold: float   = 0.0
+    cellprob_threshold: float
 }
 
 workflow {
