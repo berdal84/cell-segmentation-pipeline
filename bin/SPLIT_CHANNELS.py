@@ -35,7 +35,7 @@ match input_file.suffix:
 
                 channel_name = get_channel_name(channel_i)
                 out_path     = Path(f"{args.output_file}_{channel_name}.tif")
-                channel_view = image(C=channel_i) if "C" in num_channels else image
+                channel_view = image(C=channel_i) if "C" in image.dims else image
                 channel_arr  = np.squeeze(channel_view.asarray())
                     
                 # Write image
