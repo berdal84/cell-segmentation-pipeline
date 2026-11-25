@@ -40,7 +40,7 @@ def normalize_at_percentile(x: np.ndarray, percentile_min: float = 1.0, percenti
 # parse arguments
 parser = argparse.ArgumentParser(description="Segmentation Tool (uses cellpose to segmentize cell microscopy images)")
 parser.add_argument("--samples" , type=Path, help="Path to a CSV listing samples (requires a column 'path')")
-parser.add_argument("-o", "--output", default="./results/segmentation", type=Path, help="Path to the desired output path")
+parser.add_argument("--output", type=Path, help="Path to the desired output path")
 parser.add_argument("--use_gpu", default=False,  action=argparse.BooleanOptionalAction)
 parser.add_argument('--normalize', action=argparse.BooleanOptionalAction, default=False, help="When true, the image is normalized globally (outside cellpose) using the two percentiles.")
 parser.add_argument('--save_normalized', action=argparse.BooleanOptionalAction, default=True, help="If normalization is ON, when this argument is ON it will save the normalized images to disk. ON by default since it helps to understand the results.")

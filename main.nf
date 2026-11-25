@@ -20,14 +20,14 @@ process SPLIT_CHANNELS {
     publishDir 'results/tmp/splitted-channels', mode: 'copy'
 
     input:
-    tuple (czi_path: Path, channel_names: Iterable<String>)
+    tuple (csv: Path, images: Bag<Path> )
 
     output:
-    tifs: Set<Path> = files("${czi_path.baseName}*.tif")
+    tifs: Set<Path> = files("*.tif")
 
     script:
     """
-    SPLIT_CHANNELS.py "${czi_path.name}" "${czi_path.baseName}" ${channel_names.join(" ")}
+    SPLIT_CHANNELS.py --samples "${csv.name}" --output ./
     """
 }
 
@@ -85,49 +85,47 @@ params {
 }
 
 workflow {
-    ch_sample_file = channel.of(params.sample_file)
-    // ch_samples_xslx.view()
+    ch_spreadsheet = channel.of(params.sample_file)
 
     if( params.sample_file.extension == "xlsx")
     {
-        ch_sample_file = XLSX_TO_CSV(ch_sample_file, params.sample_file_header_row)
+        ch_spreadsheet = XLSX_TO_CSV(ch_spreadsheet, params.sample_file_header_row)
     }
-    
-    // ch_samples_csv.view()
+    ch_spreadsheet.view()
 
-    // prepare inputs for SPLIT_CHANNELS
-    ch_samples = ch_sample_file
+    ch_images_to_split = ch_spreadsheet
         .flatMap { csv -> csv.splitCsv(header: true, strip: true, sep: ',') }
         .filter{ row -> !row.skip }
-        .map { row ->
+        .map { row -> params.image_dir.resolve(row.path) }
+        .collect()
+    ch_images_to_split.view()
 
-            def channel_names: Iterable<String> = [row.C1, row.C2, row.C3, row.C4]
-                .withIndex()
-                .collect { m, idx -> (m?.trim() ?: "C${idx + 1}").toString() }
-
-            tuple(
-                params.image_dir.resolve(row.path),
-                channel_names
-            )
-        }
-
-    ch_tifs = SPLIT_CHANNELS(ch_samples)
+    ch_split_channels = SPLIT_CHANNELS(
+        ch_spreadsheet.combine(ch_images_to_split)
+    )
+    ch_split_channels.view()
     
-    ch_dapi_tifs = ch_tifs.flatMap { paths ->
-        paths.findAll { path -> path.name.contains(params.marker) }
+    ch_images_to_segment = ch_split_channels
+        .flatMap { paths ->
+            paths.findAll {
+                path -> path.name.contains(params.marker)
+            }
     }
+    ch_images_to_segment.view()
 
-    ch_segmentation_input_csv = ch_dapi_tifs
+    ch_csv_to_segment = ch_images_to_segment
         .map { path -> "${path.name}" }
         .collectFile(
-            name: 'segmentation-input.csv',
+            name: 'image-to-segment.csv',
             storeDir: './results/tmp',
             seed: 'path',
             newLine: true
         )
+    ch_csv_to_segment.view()
 
-    ch_segmentation_inputs = ch_segmentation_input_csv.combine(
-        ch_dapi_tifs.collect()
+    SEGMENTATION(
+        ch_csv_to_segment.combine(
+            ch_images_to_segment.collect()
+        )
     )
-    SEGMENTATION(ch_segmentation_inputs)
 }
